@@ -1,0 +1,563 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Encuentra tu Fuego</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --fire: #EF9F27;
+    --fire-deep: #B86A00;
+    --ember: #D85A30;
+    --ink: #1a1612;
+    --ash: #6b6358;
+    --paper: #faf8f4;
+    --paper-warm: #f3ede3;
+    --border: rgba(239,159,39,0.2);
+  }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--paper);
+    color: var(--ink);
+    min-height: 100vh;
+    position: relative;
+    overflow-x: hidden;
+  }
+  body::before {
+    content: '';
+    position: fixed; inset: 0;
+    background-image:
+      radial-gradient(ellipse 80% 60% at 10% 90%, rgba(239,159,39,0.08) 0%, transparent 60%),
+      radial-gradient(ellipse 60% 40% at 90% 10%, rgba(216,90,48,0.06) 0%, transparent 50%);
+    pointer-events: none; z-index: 0;
+  }
+  .page { position: relative; z-index: 1; max-width: 660px; margin: 0 auto; padding: 3rem 1.5rem 5rem; }
+
+  .flame-icon { display: inline-block; margin-bottom: 1rem; width: 40px; height: 48px; }
+  .flame-icon svg { width: 100%; height: 100%; }
+
+  #intro { animation: fadeUp 0.8s ease both; }
+  #intro header { text-align: center; margin-bottom: 2.5rem; }
+  h1 {
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(2rem, 5vw, 2.8rem);
+    font-weight: 400; letter-spacing: -0.02em; line-height: 1.1;
+    color: var(--ink); margin-bottom: 0.75rem;
+  }
+  h1 em { font-style: italic; color: var(--fire-deep); }
+  .tagline { font-size: 15px; color: var(--ash); line-height: 1.6; }
+
+  .def-card {
+    background: white;
+    border: 0.5px solid var(--border);
+    border-top: 3px solid var(--fire);
+    border-radius: 16px;
+    padding: 1.75rem 2rem;
+    margin-bottom: 1.25rem;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.04), 0 8px 24px rgba(239,159,39,0.04);
+  }
+  .def-label {
+    font-size: 10px; font-weight: 500; letter-spacing: 0.12em; text-transform: uppercase;
+    color: var(--fire); margin-bottom: 0.75rem;
+  }
+  .def-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.15rem; font-weight: 500; color: var(--ink);
+    margin-bottom: 0.75rem; line-height: 1.4;
+  }
+  .def-body { font-size: 15px; color: var(--ash); line-height: 1.75; }
+  .def-body p { margin-bottom: 0.85rem; }
+  .def-body p:last-child { margin-bottom: 0; }
+
+  .how-card {
+    background: var(--paper-warm);
+    border-left: 2px solid var(--fire);
+    border-radius: 0 12px 12px 0;
+    padding: 1.25rem 1.5rem;
+    margin-bottom: 2rem;
+    font-size: 15px; color: var(--ash); line-height: 1.75;
+  }
+  .how-card strong { color: var(--ink); font-weight: 500; }
+
+  .progress-wrap { margin-bottom: 2.5rem; }
+  .progress-meta { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+  .step-label { font-size: 12px; font-weight: 500; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ash); }
+  .step-pct { font-size: 12px; color: var(--fire-deep); font-weight: 500; }
+  .bar-track { height: 2px; background: rgba(0,0,0,0.08); border-radius: 2px; }
+  .bar-fill { height: 2px; background: linear-gradient(90deg, var(--fire), var(--ember)); border-radius: 2px; transition: width 0.6s cubic-bezier(0.4,0,0.2,1); }
+
+  .card {
+    background: white;
+    border: 0.5px solid var(--border);
+    border-radius: 16px;
+    padding: 2rem;
+    margin-bottom: 1.25rem;
+    animation: fadeUp 0.5s ease both;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.04), 0 8px 24px rgba(239,159,39,0.04);
+  }
+  .q-key {
+    display: inline-block;
+    font-size: 11px; font-weight: 500; letter-spacing: 0.1em; text-transform: uppercase;
+    color: var(--fire-deep); background: rgba(239,159,39,0.1);
+    border-radius: 4px; padding: 2px 8px; margin-bottom: 0.75rem;
+  }
+  .q-section { font-size: 13px; color: var(--fire-deep); font-weight: 500; margin-bottom: 0.5rem; }
+  .q-text {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.2rem; font-weight: 400; line-height: 1.4;
+    margin-bottom: 0.6rem; color: var(--ink);
+  }
+  .q-guide { font-size: 14px; color: var(--ash); line-height: 1.65; }
+
+  .cdf-card {
+    background: var(--paper-warm);
+    border-left: 2px solid var(--fire);
+    border-radius: 0 10px 10px 0;
+    padding: 1rem 1.25rem;
+    margin-bottom: 1rem;
+    animation: fadeUp 0.5s 0.05s ease both;
+  }
+  .cdf-label {
+    font-size: 10px; font-weight: 500; letter-spacing: 0.1em; text-transform: uppercase;
+    color: var(--fire); margin-bottom: 0.4rem;
+  }
+  .cdf-text { font-size: 14px; color: var(--ash); line-height: 1.7; font-style: italic; }
+
+  .tip-card {
+    background: rgba(239,159,39,0.06);
+    border: 0.5px solid rgba(239,159,39,0.25);
+    border-radius: 10px;
+    padding: 0.75rem 1rem;
+    margin-bottom: 1.25rem;
+    font-size: 13px; color: var(--ash); line-height: 1.6;
+    animation: fadeUp 0.5s 0.08s ease both;
+  }
+  .tip-card strong { color: var(--fire-deep); }
+
+  .input-wrap { animation: fadeUp 0.5s 0.1s ease both; }
+  textarea {
+    width: 100%; min-height: 120px;
+    padding: 1rem 1.25rem;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 15px; line-height: 1.7;
+    color: var(--ink); background: white;
+    border: 0.5px solid rgba(0,0,0,0.15);
+    border-radius: 12px; resize: vertical;
+    transition: border-color 0.2s; outline: none;
+  }
+  textarea::placeholder { color: #b8ad9e; }
+  textarea:focus { border-color: var(--fire); }
+
+  .btn-row { display: flex; justify-content: flex-end; margin-top: 0.75rem; gap: 0.75rem; }
+  .btn-primary {
+    font-family: 'DM Sans', sans-serif;
+    padding: 0.6rem 1.5rem; font-size: 14px; font-weight: 500;
+    background: var(--ink); color: var(--paper);
+    border: none; border-radius: 8px;
+    cursor: pointer; transition: transform 0.15s, background 0.2s;
+  }
+  .btn-primary:hover { background: #2e2820; transform: translateY(-1px); }
+  .btn-primary:active { transform: scale(0.98); }
+  .btn-ghost {
+    font-family: 'DM Sans', sans-serif;
+    padding: 0.6rem 1.25rem; font-size: 14px;
+    background: transparent; color: var(--ash);
+    border: 0.5px solid rgba(0,0,0,0.15); border-radius: 8px;
+    cursor: pointer; transition: border-color 0.2s;
+  }
+  .btn-ghost:hover { border-color: var(--ash); }
+  .btn-start {
+    font-family: 'DM Sans', sans-serif;
+    width: 100%; padding: 0.85rem 1.5rem;
+    font-size: 15px; font-weight: 500;
+    background: var(--ink); color: var(--paper);
+    border: none; border-radius: 10px;
+    cursor: pointer; transition: transform 0.15s, background 0.2s;
+  }
+  .btn-start:hover { background: #2e2820; transform: translateY(-1px); }
+
+  .loading { text-align: center; padding: 3rem 0; }
+  .dots { display: inline-flex; gap: 6px; margin-bottom: 1rem; }
+  .dots span {
+    width: 8px; height: 8px; border-radius: 50%; background: var(--fire);
+    animation: pulse 1.2s ease-in-out infinite;
+  }
+  .dots span:nth-child(2) { animation-delay: 0.2s; }
+  .dots span:nth-child(3) { animation-delay: 0.4s; }
+  @keyframes pulse { 0%,80%,100%{opacity:0.2;transform:scale(0.8)} 40%{opacity:1;transform:scale(1)} }
+  .loading p { font-size: 14px; color: var(--ash); }
+
+  .fuego-wrap { animation: fadeUp 0.7s ease both; }
+  .fuego-header { display: flex; align-items: center; gap: 10px; margin-bottom: 1.5rem; }
+  .fuego-header-line { flex: 1; height: 1px; background: var(--border); }
+  .fuego-header-label {
+    font-size: 11px; font-weight: 500; letter-spacing: 0.12em; text-transform: uppercase; color: var(--fire);
+  }
+  .fuego-body { font-size: 16px; line-height: 1.85; color: var(--ink); margin-bottom: 2rem; }
+  .mantra-wrap { border-top: 0.5px solid var(--border); padding-top: 1.5rem; text-align: center; }
+  .mantra-label { font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--ash); margin-bottom: 0.75rem; }
+  .mantra-text {
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(1.2rem, 3.5vw, 1.55rem);
+    font-style: italic; color: var(--fire-deep); line-height: 1.4;
+  }
+  .copy-btn {
+    display: inline-block; margin-top: 1.25rem;
+    font-family: 'DM Sans', sans-serif; font-size: 13px; color: var(--ash);
+    background: none; border: 0.5px solid rgba(0,0,0,0.15);
+    padding: 0.4rem 1rem; border-radius: 6px; cursor: pointer; transition: border-color 0.2s;
+  }
+  .copy-btn:hover { border-color: var(--ash); }
+
+  .closing-card {
+    background: white;
+    border: 0.5px solid var(--border);
+    border-bottom: 3px solid var(--fire);
+    border-radius: 16px;
+    padding: 2rem; margin-top: 1.25rem;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.04), 0 8px 24px rgba(239,159,39,0.04);
+  }
+  .closing-label {
+    font-size: 10px; font-weight: 500; letter-spacing: 0.12em; text-transform: uppercase;
+    color: var(--fire); margin-bottom: 1rem;
+  }
+  .closing-body { font-size: 15px; color: var(--ash); line-height: 1.8; }
+  .closing-body p { margin-bottom: 0.85rem; }
+  .closing-final {
+    margin-bottom: 0 !important; color: var(--ink) !important;
+    font-family: 'Playfair Display', serif; font-style: italic; font-size: 16px;
+  }
+  .restart-row { text-align: center; margin-top: 2rem; }
+  footer { text-align: center; margin-top: 4rem; font-size: 12px; color: #c2b9aa; }
+  footer span { color: var(--fire); }
+  @keyframes fadeUp { from { opacity:0; transform:translateY(12px); } to { opacity:1; transform:translateY(0); } }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <div id="intro">
+    <header>
+      <div class="flame-icon">
+        <svg viewBox="0 0 40 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M20 4C20 4 28 14 28 22C28 28 24 32 20 34C16 32 12 28 12 22C12 14 20 4 20 4Z" fill="#EF9F27" opacity="0.9"/>
+          <path d="M20 16C20 16 25 22 25 27C25 31 22.5 33.5 20 34.5C17.5 33.5 15 31 15 27C15 22 20 16 20 16Z" fill="#D85A30"/>
+          <path d="M20 26C20 26 22 28.5 22 30.5C22 32.2 21.1 33.3 20 34C18.9 33.3 18 32.2 18 30.5C18 28.5 20 26 20 26Z" fill="#faf8f4"/>
+          <ellipse cx="20" cy="43" rx="8" ry="2" fill="#EF9F27" opacity="0.15"/>
+        </svg>
+      </div>
+      <h1>Encuentra tu <em>Fuego</em></h1>
+      <p class="tagline">Un viaje de 11 preguntas para descubrir el mensaje que llevas por dentro.</p>
+    </header>
+
+    <div class="def-card">
+      <div class="def-label">Definición de Fuego</div>
+      <p class="def-title">Es el mensaje que llevas por dentro. La razón por la que vives, y tu llamado al cambio en el mundo. La historia y el ardor del objetivo de nuestras vidas.</p>
+      <div class="def-body">
+        <p>Conocer tu Fuego y compartirlo en una historia es el atajo más importante para atraer y conectar con las personas con las que quieres trabajar, también para tener más clientes, más oportunidades y más follows.</p>
+        <p>Nunca ha sido tan importante en una poblada era digital ser capaz de conocer tu fuego y compartirlo. El fuego cuando llegó a nosotros por primera vez fue la clave para nuestra evolución, y una vez más ahora tu fuego, tu voz, es la clave para destacar y evolucionar en esta era.</p>
+        <p>Muchas historias fallan al conectar emocionalmente o a motivarnos a hacer lo que el protagonista hace, por eso te regalamos este ejercicio. Deseamos que tengas claridad de tu fuego como primer paso para llegar a contar la historia que naciste para compartir.</p>
+      </div>
+    </div>
+
+    <div class="how-card">
+      <strong>¿Cómo funciona?</strong><br><br>
+      La forma en la que resolveremos la incógnita del incendio que llevas dentro es simple:<br><br>
+      yo propongo una cuestión<br>
+      te confieso mi respuesta<br>
+      y tú, me sigues el juego<br><br>
+      Algo así como una plática entre tú y yo.
+    </div>
+
+    <button class="btn-start" onclick="startExercise()">Comenzar el ejercicio</button>
+  </div>
+
+  <div id="exercise" style="display:none;">
+    <div class="progress-wrap">
+      <div class="progress-meta">
+        <span class="step-label" id="step-label">Pregunta 1 de 11</span>
+        <span class="step-pct" id="step-pct">9%</span>
+      </div>
+      <div class="bar-track"><div class="bar-fill" id="bar-fill" style="width:9%"></div></div>
+    </div>
+    <div id="main-content"></div>
+  </div>
+
+</div>
+
+<footer>Basado en el método <span>Follow's</span> · Encuentra tu Fuego</footer>
+
+<script>
+const STEPS = [
+  {
+    key:'A', section:'Empecemos por lo amargo: los miedos.',
+    question:'¿Qué es lo que se te dificulta y disgusta?',
+    guide:'Piensa en algo que no te guste hacer, pero no tan usual… algo como levantarte temprano, o tener que entregarle tus días a responsabilidades indiscutiblemente obligatorias (como un trabajo de ocho horas mal pagado, o cumplir con la temporada de exámenes), algo que te haga sentir ANORMAL.',
+    cdf:'No me gustan los eventos grandes, como las fiestas o festejos, pero no por las celebraciones en si. Al final del día, soy una pintura rupestre que por alguna razón cobro vida, no suelo ser muy interesante en lugares como ese…',
+    tip:'CONSEJO #2: intenta ir escribiendo las respuestas a las incógnitas que te vayas encontrando.',
+    placeholder:'Confesión tuya (CT)…'
+  },
+  {
+    key:'B', section:'Descubramos la razón…',
+    question:'¿Por qué no te gusta?',
+    guide:'Normalmente nuestra amargura son reflejos que nuestro cuerpo alguna vez desarrolló con el fin de protegernos.',
+    cdf:'Porque soy malo enganchándome en conversaciones. Con frecuencia siento que aburro a la gente, me siento incomprendido… TODO EMPEZÓ cuando nadie de pequeño hablaba conmigo, ni siquiera se daban cuenta de que estás vivo.',
+    tip:'CONSEJO #3: no te conformes con una respuesta, es momento de investigarte, toca cuantos puntos como quieras.',
+    placeholder:'… TODO EMPEZÓ cuando…'
+  },
+  {
+    key:'C', section:'Sigamos con algo más dulce: los deseos.',
+    question:'¿Qué disfrutabas hacer?',
+    guide:'Presta atención a tus recuerdos, y dime en qué solías gastar tu tiempo libre cuando niño. Si eres algo como yo, seguro será algo así como no despegarte del televisor a la hora de las películas.',
+    cdf:'1. Escuchar las historias de los primeros humanos, aprenderme sus tácticas y precauciones, ver el interés y la pasión por escuchar y ser escuchados; 2. Cuando un humano le contaba al otro el porqué es que me habían pintado, pues resulta que un dios alguna vez les regaló una luz que se volvió un punto y aparte en su historia; 3. Esa luz era el fuego… adoraba ver a mi clan cocinar, calentarse y protegerse, ver cómo esa fogata/antorcha/resplandor sería la llave al mundo que hoy conoces como tuyo.',
+    tip:null, placeholder:'Confesión tuya (CT)…'
+  },
+  {
+    key:'D', section:'Ahora, busquemos la norma.',
+    question:'¿Cuál es tu patrón?',
+    guide:'Algo que coincida y se repita. No tanto la acción, pero sí la razón. Como un niño cuyo protagonista es un nuevo superhéroe: ve sus películas, se disfraza de él y juega a salvar el mundo.',
+    cdf:'Me gusta escuchar historias, ver a mis hermanos tener éxito, me gusta la belleza del sentimiento, y la fuerza de avanzar por un mejor mañana. Me encantan las historias de fuego.',
+    tip:null, placeholder:'Confesión tuya (CT)…'
+  },
+  {
+    key:'E', section:'A donde vamos y de donde huimos, se relacionan entre sí.',
+    question:'¿Qué deseo generó tu miedo?',
+    guide:'Escoge un miedo o deseo que te impacte más que los demás. Busquemos su lado contrario.',
+    cdf:'Por no haber sido observado o reconocido cuando pequeño, crecí muy solo, por eso me considero un ser no muy interesante; sin embargo, esta soledad me hizo ser un gran escuchante y fanático de las historias trascendentales.',
+    tip:null, placeholder:'A partir de…, yo empecé a querer…'
+  },
+  {
+    key:'F', section:'Hagamos una pequeña pausa.',
+    question:'Agradece a tu mente y recuerda que ahora estás a salvo.',
+    guide:'Regresa la intención con la que generaste respuestas "negativas" ante ciertas situaciones. Recuerda que al final del día, este miedo nació para protegerte ante algo, no es malo, solo NO quiere verte herido.',
+    cdf:'Pues para empezar quiero reconocerme que estoy enfrentando mi miedo, y lo mucho que te agradezco que me estés escuchando (leyendo), y en segundo lugar, sé de dónde viene, pero también me doy cuenta que ya no soy sólo una pintura solitaria en una roca. Ahora soy una página, soy una voz y finalmente estoy en un lugar seguro.',
+    tip:null, placeholder:'"Gracias, miedo, por protegerme cuando…, pero ya no soy un niño/a, por eso, puedes estar tranquilo. Ya estamos a salvo."'
+  },
+  {
+    key:'G', section:'El poder de regalar poder.',
+    question:'¿Cuál es el fuego a obsequiar?',
+    guide:'A partir de tu oscuridad, tu mente te regaló un don y un consuelo. Quiero que pienses en él. Y aún mejor, si hoy pudieras regalarle nuevamente este superpoder a este niño, ¿qué sería? Ahora ve a este niño, reflejado en el mundo, y reparte tu fuego.',
+    cdf:'Mi consuelo se volvieron las anécdotas de éxito y fuerza, ver a los humanos avanzar y lograr cosas increíbles. Yo fui la primera expresión de arte, por ende, este también es un gran amigo. Lo que yo quiero regalarle al pequeño Follow y a ti, es el valor para hablar, la protección y el apoyo para avanzar, el éxito de contar historias y el fuego para que sean las mejores.',
+    tip:'CONSEJO #5: no tengas miedo a extenderte.',
+    placeholder:'Confesión tuya (CT)…'
+  },
+  {
+    key:'H', section:'Toda luz tiene su sombra.',
+    question:'Recuerda que por solo el hecho de dar el paso, ya es una victoria.',
+    guide:'Con las ganas de cambiar al mundo también viene el nuevo miedo de no lograrlo. Recuerda que estás bien y estás a salvo, que después de todo este tiempo, lo has logrado. Incluso cuando las cosas no terminaron como esperabas, su final no fue tan malo, y la ganancia tampoco tan mínima. Me atrevería a decirte que sé que todo, de hecho, concluyó de una mejor forma.',
+    cdf:'Mi miedo entonces sería aburrir, desinteresar, no ser tan relevante como las narraciones que me rodearon, pero ahora sé que por más terrible que eso se sienta, lo hice, lo estoy haciendo y esto ya me hace ganar. Gané amigos, una nueva voz y la capacidad de ayudar a los que se han sentado a escuchar, al final aburrir a alguna persona en el proceso no puede estar tan mal.',
+    tip:null, placeholder:'Confesión tuya (CT)…'
+  },
+  {
+    key:'I', section:'Sobre el vehículo del fuego.',
+    question:'¿Cuál será tu forma de transportar tu fuego?',
+    guide:'Regresa a lo que hacías de pequeño, o en lo que inviertes tu tiempo libre. Recuerda que el artista es el que siente.',
+    cdf:'Como probablemente habrás notado, mi amigo el lector, soy un ser bidimensional, amante de los relatos, quiero compartir esto con historias a través de las letras y cuadros.',
+    tip:'CONSEJO #6: no te angusties si no estás seguro, recuerda que por el hecho de pensarlo, ya lo estás logrando. Además, hay mil formas más de expresarte.',
+    placeholder:'Confesión tuya (CT)…'
+  },
+  {
+    key:'J', section:'Ahora visualiza el lugar a donde te gustaría llegar y las razones…',
+    question:'¿A dónde quieres llegar?',
+    guide:'El ser humano necesita ser parte de algo, dejarse ayudar por ese algo, y volverse también su punto de apoyo. El consuelo y el poder con el que tú naciste y aprendiste a dar, es tu fuego.',
+    cdf:'Yo quiero llegar a los líderes que quieren cambiar la historia, a los corazones valientes de los artistas, líderes y emprendedores que decidieron tomar su propio camino, porque lo que les dicta su corazón va primero aunque los ponga en contra de la norma, quiero llegar a las voces que inspiran al tiempo a detenerse y juntos cambiar al mundo.',
+    tip:null, placeholder:'Confesión tuya (CT)…'
+  },
+  {
+    key:'K', section:'¿Quién eres en tu día a día, que no te estás abrazando?',
+    question:'¿Quién te gustaría ser, para volverte el punto clave de tu llama?',
+    guide:'Así solo una persona encuentre la fuerza para seguir en ti, tú ya habrás ganado, incluso cuando esa primera persona seas tú mismo.',
+    cdf:'A veces me siento como solo una pintura sentada en una roca, pero quiero recordarme, siempre, que soy La Voz del Fuego.',
+    tip:'CONSEJO #7: no busques la perfección, pero cada que puedas, di las palabras y da los pasos que, pensando en que fueran tus últimos, te sabrías el fuego ardiendo.',
+    placeholder:'Confesión tuya (CT)…'
+  }
+];
+
+let current = 0;
+const answers = {};
+
+function startExercise() {
+  document.getElementById('intro').style.display = 'none';
+  document.getElementById('exercise').style.display = 'block';
+  render();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function render() {
+  const s = STEPS[current];
+  const pct = Math.round(((current + 1) / STEPS.length) * 100);
+  document.getElementById('bar-fill').style.width = pct + '%';
+  document.getElementById('step-pct').textContent = pct + '%';
+  document.getElementById('step-label').textContent = 'Pregunta ' + (current + 1) + ' de ' + STEPS.length;
+
+  const tipHTML = s.tip
+    ? `<div class="tip-card"><strong>${s.tip.split(':')[0]}:</strong>${s.tip.split(':').slice(1).join(':')}</div>`
+    : '';
+
+  document.getElementById('main-content').innerHTML = `
+    <div class="card">
+      <div class="q-key">${s.key}</div>
+      ${s.section ? `<p class="q-section">${s.section}</p>` : ''}
+      <p class="q-text">${s.question}</p>
+      <p class="q-guide">${s.guide}</p>
+    </div>
+    <div class="cdf-card">
+      <div class="cdf-label">Confesión de Follow's (CDF)</div>
+      <p class="cdf-text">${s.cdf}</p>
+    </div>
+    ${tipHTML}
+    <div class="input-wrap">
+      <textarea id="ans" placeholder="${s.placeholder}">${answers[s.key] || ''}</textarea>
+      <div class="btn-row">
+        ${current > 0 ? '<button class="btn-ghost" onclick="goBack()">Atrás</button>' : ''}
+        <button class="btn-primary" onclick="handleNext()">
+          ${current < STEPS.length - 1 ? 'Continuar' : 'Descubrir mi Fuego'}
+        </button>
+      </div>
+    </div>`;
+  setTimeout(() => { const ta = document.getElementById('ans'); if (ta) ta.focus(); }, 100);
+}
+
+function goBack() {
+  const val = document.getElementById('ans').value.trim();
+  if (val) answers[STEPS[current].key] = val;
+  current--;
+  render();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+async function handleNext() {
+  const val = document.getElementById('ans').value.trim();
+  if (!val) { document.getElementById('ans').focus(); document.getElementById('ans').style.borderColor = 'var(--ember)'; return; }
+  answers[STEPS[current].key] = val;
+  if (current < STEPS.length - 1) {
+    current++;
+    render();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  } else {
+    showLoading();
+    await generateFuego();
+  }
+}
+
+function showLoading() {
+  document.getElementById('step-label').textContent = 'Sintetizando tu Fuego…';
+  document.getElementById('bar-fill').style.width = '100%';
+  document.getElementById('step-pct').textContent = '100%';
+  document.getElementById('main-content').innerHTML = `
+    <div class="loading">
+      <div class="dots"><span></span><span></span><span></span></div>
+      <p>Tu Fuego está tomando forma…</p>
+    </div>`;
+}
+
+async function generateFuego() {
+  const prompt = `Eres un guía de narrativa personal llamado Follow's. Tu misión es sintetizar el Fuego interior de una persona a partir de sus respuestas a 11 preguntas de autoconocimiento.
+
+Con base en las siguientes respuestas del estudiante, escribe una síntesis poderosa, cálida y personal de su FUEGO: el mensaje que lleva por dentro, la razón por la que vive y su llamado al cambio en el mundo.
+
+La síntesis debe:
+- Ser en segunda persona (hablarle directamente a la persona)
+- Tener entre 120 y 180 palabras
+- Mencionar su miedo raíz y cómo se convirtió en su mayor fuerza
+- Nombrar el don específico que quiere obsequiar al mundo
+- Terminar con una frase poderosa y memorable que sea "su Fuego" (como un mantra de 5-10 palabras)
+- Usar un tono cálido, poético y alentador, sin ser exagerado
+
+Responde SOLO con la síntesis. La última línea debe ser únicamente el mantra, sin comillas ni prefijos.
+
+Respuestas del estudiante:
+A) ${answers['A']}
+B) ${answers['B']}
+C) ${answers['C']}
+D) ${answers['D']}
+E) ${answers['E']}
+F) ${answers['F']}
+G) ${answers['G']}
+H) ${answers['H']}
+I) ${answers['I']}
+J) ${answers['J']}
+K) ${answers['K']}`;
+
+  try {
+    const res = await fetch('/api/fuego', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'claude-opus-4-5',
+        max_tokens: 1000,
+        messages: [{ role: 'user', content: prompt }]
+      })
+    });
+    if (!res.ok) throw new Error('Error ' + res.status);
+    const data = await res.json();
+    const text = data.content.map(b => b.text || '').join('').trim();
+    showFuego(text);
+  } catch(e) {
+    document.getElementById('main-content').innerHTML = `
+      <div class="card">
+        <p style="color:var(--ember);font-weight:500;margin-bottom:0.5rem;">Algo salió mal</p>
+        <p style="color:var(--ash);font-size:14px;">${e.message}</p>
+        <div class="btn-row" style="margin-top:1rem;">
+          <button class="btn-primary" onclick="showLoading();generateFuego();">Reintentar</button>
+        </div>
+      </div>`;
+  }
+}
+
+function showFuego(text) {
+  const lines = text.split('\n').filter(l => l.trim());
+  const mantra = lines[lines.length - 1].replace(/^["']|["']$/g, '');
+  const body = lines.slice(0, -1).join(' ');
+
+  document.getElementById('step-label').textContent = 'Tu Fuego';
+  document.getElementById('main-content').innerHTML = `
+    <div class="fuego-wrap">
+      <div class="card">
+        <div class="fuego-header">
+          <div class="fuego-header-line"></div>
+          <div class="fuego-header-label">Tu síntesis</div>
+          <div class="fuego-header-line"></div>
+        </div>
+        <p class="fuego-body">${body}</p>
+        <div class="mantra-wrap">
+          <div class="mantra-label">Tu Fuego</div>
+          <p class="mantra-text">"${mantra}"</p>
+          <button class="copy-btn" onclick="copyMantra('${mantra.replace(/'/g,"\\'")}',this)">Copiar mantra</button>
+        </div>
+      </div>
+      <div class="closing-card">
+        <div class="closing-label">Un último mensaje</div>
+        <div class="closing-body">
+          <p>Siéntete en la seguridad de repasar los puntos, cuantas veces el instinto te lo pida. Escúchate, y siente el calor y la sombra de tu incendio. Pregúntate las formas en que lo querrás compartir, y cuando lo tengas, te preguntarás: "¿cómo es que lo traigo a la vida?"</p>
+          <p>Y aquí es donde nos volvemos a juntar… Necesitarás una historia, y el equipo para navegar. Requieres el apoyo y el aliento, pero no te espantes, para eso estoy aquí, por esto llegaste hasta acá.</p>
+          <p>Te propongo algo: permíteme conocer tu historia hasta lo más profundo, y déjame ayudarte a contarla de las formas más brillantes. Ven conmigo, es momento de narrarte la historia con la que vas a cambiar al mundo.</p>
+          <p class="closing-final">Toma tu fuego y repártelo.</p>
+        </div>
+      </div>
+      <div class="restart-row">
+        <button class="btn-ghost" onclick="restart()">Empezar de nuevo</button>
+      </div>
+    </div>`;
+}
+
+function copyMantra(text, btn) {
+  navigator.clipboard.writeText(text).then(() => {
+    btn.textContent = 'Copiado';
+    setTimeout(() => { btn.textContent = 'Copiar mantra'; }, 2000);
+  });
+}
+
+function restart() {
+  current = 0;
+  Object.keys(answers).forEach(k => delete answers[k]);
+  document.getElementById('exercise').style.display = 'none';
+  document.getElementById('intro').style.display = 'block';
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+</script>
+</body>
+</html>
